@@ -1,3 +1,5 @@
+# сгенерированно Дипсиком на основе остального кода
+
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 from board.game_square import GameSquare
