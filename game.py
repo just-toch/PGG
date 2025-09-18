@@ -2,6 +2,7 @@ from board import GameSquare
 from board import Player
 from random import randrange
 from pathlib import Path
+from gsheets import get_load_from_cloud
 import json
 
 
@@ -43,7 +44,7 @@ def open_squares(square, player):
 def save_game(player):
     filename = f'savegame_{player.name.lower()}.json'
     with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(player.save(), f, ensure_ascii=False, indent=2)
+        json.dump(player.save(), f, ensure_ascii=False)
 
 
 def load_game(player=None):
@@ -73,6 +74,22 @@ def load_game(player=None):
         load_player.field.append(row_temp)
     return load_player
 
+def load_game_from_cloud(player=None):
+    data = json.loads(get_load_from_cloud())
+    load_player = Player(data['name'], [], data['tokens'])
+    for row in data['field']:
+        row_temp = []
+        for square_data in row:
+            square = GameSquare(
+                square_data['column'],
+                square_data['row'],
+                square_data['name'],
+                square_data['description']
+                )
+            square.status, square.mark = square_data['status'], square_data['mark']
+            row_temp.append(square)
+        load_player.field.append(row_temp)
+    return load_player
 
 def check_victory(player):
     for row in range(5):
