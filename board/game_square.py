@@ -11,11 +11,17 @@ class GameSquare:
         self.status = SquareStatus.CLOSED
         self.mark = 'x'
 
+    def start_position(self):
+        self.status = SquareStatus.CLEARED
+        self.mark = '!!'
+        self.name = 0
+        self.description = 0
+
     def coordinates(self):
         return f'{self.row}{self.column}'
 
     def data(self):
-        return f'{self.name}\n{self.description}'
+        return int(self.name), int(self.description)
 
     def change_to_available(self):
         if self.status == SquareStatus.CLOSED:

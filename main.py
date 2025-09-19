@@ -1,12 +1,13 @@
-from game import new_game, load_game, main_game, load_game_from_cloud
+from game import new_game, load_game, main_game, load_game_from_cloud, show_full_map
+from gsheets import get_player_stats
 
 
 def main():
-
     while True:
         print('1. Новая игра')
         print('2. Загрузка')
         print('3. Загрузка из облака')
+        print('4. Посмотреть статистику других игроков')
         print('0. Выход')
 
         command = input()
@@ -19,6 +20,9 @@ def main():
 
             case '3':
                 main_game(load_game_from_cloud())
+
+            case '4':
+                get_player_stats()
 
             case '0':
                 break

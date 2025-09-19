@@ -2,33 +2,21 @@ from board import GameSquare
 from board import Player
 from random import randrange
 from pathlib import Path
-from gsheets import get_load_from_cloud
+from gsheets import get_load_from_cloud, get_column, save_to_cloud, create_player_worksheet, create_review
 import json
 
 
-descriptions = [
-    'Описание 1', 'Описание 2', 'Описание 3', 'Описание 4', 'Описание 5',
-    'Описание 6', 'Описание 7', 'Описание 8', 'Описание 9', 'Описание 10',
-    'Описание 11', 'Описание 12', 'Описание 13', 'Описание 14', 'Описание 15',
-    'Описание 16', 'Описание 17', 'Описание 18', 'Описание 19', 'Описание 20',
-    'Описание 21', 'Описание 22', 'Описание 23', 'Описание 24', 'Описание 25'
-]
-
-names = [
-    'Имя 1', 'Имя 2', 'Имя 3', 'Имя 4', 'Имя 5',
-    'Имя 6', 'Имя 7', 'Имя 8', 'Имя 9', 'Имя 10',
-    'Имя 11', 'Имя 12', 'Имя 13', 'Имя 14', 'Имя 15',
-    'Имя 16', 'Имя 17', 'Имя 18', 'Имя 19', 'Имя 20',
-    'Имя 21', 'Имя 22', 'Имя 23', 'Имя 24', 'Имя 25'
-]
-
+names = get_column('games', 1)
+descriptions = get_column('games', 2)
 
 def generate_game_field(game_field):
+    names_temp, descriptions_temp = names.copy(), descriptions.copy()
     for row in range(5):
         rows = []
         for column in range(5):
-            index = randrange(len(names))
-            name, description = names.pop(index), descriptions.pop(index)
+            index = randrange(1, len(names_temp)-1)
+            names_temp.pop(index), descriptions_temp.pop(index)
+            name, description = index, index
             rows.append(GameSquare(column, row, name, description))
         game_field.append(rows)
     return game_field
@@ -43,8 +31,10 @@ def open_squares(square, player):
 
 def save_game(player):
     filename = f'savegame_{player.name.lower()}.json'
+    data = player.save()
     with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(player.save(), f, ensure_ascii=False)
+        json.dump(data, f, ensure_ascii=False, indent=1)
+    save_to_cloud(player.name.lower(), data)
 
 
 def load_game(player=None):
@@ -74,22 +64,25 @@ def load_game(player=None):
         load_player.field.append(row_temp)
     return load_player
 
-def load_game_from_cloud(player=None):
-    data = json.loads(get_load_from_cloud())
-    load_player = Player(data['name'], [], data['tokens'])
-    for row in data['field']:
-        row_temp = []
-        for square_data in row:
-            square = GameSquare(
-                square_data['column'],
-                square_data['row'],
-                square_data['name'],
-                square_data['description']
-                )
-            square.status, square.mark = square_data['status'], square_data['mark']
-            row_temp.append(square)
-        load_player.field.append(row_temp)
-    return load_player
+def load_game_from_cloud(name=None):
+    try:
+        data = json.loads(get_load_from_cloud(name))
+        load_player = Player(data['name'], [], data['tokens'])
+        for row in data['field']:
+            row_temp = []
+            for square_data in row:
+                square = GameSquare(
+                    square_data['column'],
+                    square_data['row'],
+                    square_data['name'],
+                    square_data['description']
+                    )
+                square.status, square.mark = square_data['status'], square_data['mark']
+                row_temp.append(square)
+            load_player.field.append(row_temp)
+        return load_player
+    except TypeError:
+        return None
 
 def check_victory(player):
     for row in range(5):
@@ -114,9 +107,10 @@ def show_menu():
     print('2. Открыть клетку')
     print('3. Зачистить клетку')
     print('4. Показать карту')
-    print('5. Сохранить')
-    print('6. Загрузка')
-    print('0. Выход')
+    # print('5. Сохранить')
+    print('5. Загрузка')
+    print('6. Написать отзыв')
+    print('0. Сохранить и выйти')
 
 
 def show_tokens(player):
@@ -155,13 +149,25 @@ def show_map(status, player):
 
 
 def new_game():
-    player = Player(input('Введите свое имя:\n'), [], 3)
-    generate_game_field(player.field)
-    player.field[2][2].status = 'cleared'
-    player.field[2][2].mark = '!!'
-    open_squares(player.field[2][2], player)
-    main_game(player)
-
+    player_name = input('Введите свое имя:\n')
+    player = Player(player_name, [], 3)
+    if create_player_worksheet(player_name):
+        generate_game_field(player.field)
+        player.field[2][2].start_position()
+        open_squares(player.field[2][2], player)
+        save_game(player)
+        main_game(player)
+    else:
+        print('Такой игрок уже существует')
+        try:
+            main_game(load_game_from_cloud(player_name))
+        except (json.decoder.JSONDecodeError, TypeError) as e:
+            print('Однако данных по нему нет или они повреждены, создаю нового пользователя')
+            generate_game_field(player.field)
+            player.field[2][2].start_position()
+            open_squares(player.field[2][2], player)
+            save_game(player)
+            main_game(player)
 
 def main_game(player):
     if player is None:
@@ -171,6 +177,7 @@ def main_game(player):
     show_tokens(player)
     show_menu()
     menu(player)
+    return None
 
 
 def menu(player):
@@ -180,11 +187,14 @@ def menu(player):
             case '1':
                 coords = input('Введите координаты клетки:\n')
                 x, y = int(coords[0]), int(coords[1])
-                if isinstance(player.field[x][y], GameSquare):
-                    print(player.field[x][y].data())
+                if (isinstance(player.field[x][y], GameSquare) and player.field[x][y].status != 'closed' or
+                        player.field[x][y].status != 'available'):
+                    name_index, description_index = player.field[x][y].data()
+                    print(names[name_index])
+                    print(descriptions[description_index])
                     print(player.field[x][y].status)
                 else:
-                    print('Заглушка')
+                    print('Вы не можете смотреть описание клетки, если она не открыта')
 
             case '2':
                 if player.tokens > 0:
@@ -223,15 +233,19 @@ def menu(player):
             case '4':
                 show_full_map(player)
 
-            case '5':
-                save_game(player)
+            # case '5':
+            #     save_game(player)
 
-            case '6':
+            case '5':
                 new_player = load_game(player)
                 if new_player is not None:
                     player = new_player
 
+            case '6':
+                create_review(player.name.lower())
+
             case '0':
+                save_game(player)
                 break
 
         if check_victory(player):
