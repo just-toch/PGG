@@ -97,7 +97,6 @@ def get_player(worksheet):
         player = players_cache.get(worksheet.title)
     return player
 
-
 def get_player_stats():
     worksheet_list = get_worksheet_list()
     print('Выберите игрока:')
