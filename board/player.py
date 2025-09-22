@@ -1,9 +1,11 @@
 class Player:
 
-    def __init__(self, name, field, tokens):
+    def __init__(self, name, field, tokens, games_list=None, review_list=None):
         self.name = name
         self.field = field
         self.tokens = tokens
+        self.games_list = games_list or []
+        self.review_list = review_list or []
 
     def save(self):
         return {

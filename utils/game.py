@@ -2,7 +2,7 @@ from board import GameSquare
 from board import Player
 from random import randrange
 from pathlib import Path
-from gsheets import get_load_from_cloud, get_column, save_to_cloud, create_player_worksheet, create_review
+from .gsheets import get_column, save_to_cloud, create_player_worksheet, create_review
 import json
 
 
@@ -64,25 +64,25 @@ def load_game(player=None):
         load_player.field.append(row_temp)
     return load_player
 
-def load_game_from_cloud(name=None):
-    try:
-        data = json.loads(get_load_from_cloud(name))
-        load_player = Player(data['name'], [], data['tokens'])
-        for row in data['field']:
-            row_temp = []
-            for square_data in row:
-                square = GameSquare(
-                    square_data['column'],
-                    square_data['row'],
-                    square_data['name'],
-                    square_data['description']
-                    )
-                square.status, square.mark = square_data['status'], square_data['mark']
-                row_temp.append(square)
-            load_player.field.append(row_temp)
-        return load_player
-    except TypeError:
-        return None
+# def load_game_from_cloud(name=None):
+#     try:
+#         data = json.loads(get_load_from_cloud(name))
+#         load_player = Player(data['name'], [], data['tokens'])
+#         for row in data['field']:
+#             row_temp = []
+#             for square_data in row:
+#                 square = GameSquare(
+#                     square_data['column'],
+#                     square_data['row'],
+#                     square_data['name'],
+#                     square_data['description']
+#                     )
+#                 square.status, square.mark = square_data['status'], square_data['mark']
+#                 row_temp.append(square)
+#             load_player.field.append(row_temp)
+#         return load_player
+#     except TypeError:
+#         return None
 
 def check_victory(player):
     for row in range(5):

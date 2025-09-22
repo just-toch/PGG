@@ -1,5 +1,5 @@
-from game import new_game, load_game, main_game, load_game_from_cloud, show_full_map
-from gsheets import get_player_stats
+from utils.game import new_game, load_game, main_game, show_full_map
+from utils.gsheets import get_player_stats, load_game_from_cloud
 
 
 def main():
@@ -22,7 +22,20 @@ def main():
                 main_game(load_game_from_cloud())
 
             case '4':
-                get_player_stats()
+                player = get_player_stats()
+                print('1. Посмотреть карту')
+                print('2. Посмотреть обзоры')
+                print('0. Выход')
+                command = input()
+                match command:
+                    case '1':
+                        show_full_map(player)
+
+                    case '2':
+                        for i in range(len(player.games_list)):
+                            print(f'{i + 1}. {player.games_list[i]}')
+                            print(player.review_list[i])
+                            print()
 
             case '0':
                 break
