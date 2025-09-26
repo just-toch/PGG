@@ -2,7 +2,7 @@ from board import GameSquare
 from board import Player
 from random import randrange
 from pathlib import Path
-from .gsheets import get_column, save_to_cloud, create_player_worksheet, create_review
+from .gsheets import get_column, save_to_cloud, create_player_worksheet, create_review, load_game_from_cloud
 import json
 
 
@@ -148,36 +148,36 @@ def show_map(status, player):
         print()
 
 
-def new_game():
-    player_name = input('Введите свое имя:\n')
+def new_game(player_name):
     player = Player(player_name, [], 3)
     if create_player_worksheet(player_name):
         generate_game_field(player.field)
         player.field[2][2].start_position()
         open_squares(player.field[2][2], player)
         save_game(player)
-        main_game(player)
+        return player
     else:
         print('Такой игрок уже существует')
         try:
-            main_game(load_game_from_cloud(player_name))
+            player = load_game_from_cloud(player_name)
+            return player
         except (json.decoder.JSONDecodeError, TypeError) as e:
             print('Однако данных по нему нет или они повреждены, создаю нового пользователя')
             generate_game_field(player.field)
             player.field[2][2].start_position()
             open_squares(player.field[2][2], player)
             save_game(player)
-            main_game(player)
+            return player
 
-def main_game(player):
-    if player is None:
-        return None
-    show_full_map(player)
-    print()
-    show_tokens(player)
-    show_menu()
-    menu(player)
-    return None
+# def main_game(player):
+#     if player is None:
+#         return None
+#     show_full_map(player)
+#     print()
+#     show_tokens(player)
+#     show_menu()
+#     menu(player)
+#     return None
 
 
 def menu(player):

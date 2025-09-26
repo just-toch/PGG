@@ -1,4 +1,5 @@
-from utils.game import new_game, load_game, main_game, show_full_map
+from gui.gui_game import new_game_ui
+from utils.game import load_game, show_full_map
 from utils.gsheets import get_player_stats, load_game_from_cloud
 
 
@@ -13,7 +14,7 @@ def main():
         command = input()
         match command:
             case '1':
-                new_game()
+                new_game_ui()
 
             case '2':
                 main_game(load_game())
