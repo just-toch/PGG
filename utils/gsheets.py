@@ -14,7 +14,7 @@ print('Авторизация завершена')
 
 def get_load_from_cloud(name=None):
     if name is None:
-        worksheet_list = sh.worksheets()
+        worksheet_list = get_worksheet_list()
         print('Выберите сохранение:')
         for i, worksheet_name in enumerate(worksheet_list[1:], 1):
             print(f'{i}. {worksheet_name.title}')
@@ -59,16 +59,12 @@ def create_player_worksheet(name):
         sh.add_worksheet(title=name.lower(), rows=1000, cols=26)
         return True
 
-def create_review(player_name):
+def create_review(player_name, gamename, review):
     worksheet = sh.worksheet(player_name)
-    print('Напишите название игры')
-    game = input()
-    print('Напишите отзыв')
-    review = input()
     values_list = worksheet.col_values(1)
-    empty_cell = values_list.index('')
-    worksheet.update_cell(empty_cell+1, 1, game)
-    worksheet.update_cell(empty_cell+1, 2, review)
+    empty_cell = len(values_list) + 1
+    worksheet.update_cell(empty_cell, 1, gamename) # название игры хранится в 1 столбце
+    worksheet.update_cell(empty_cell, 2, review) # обзор игры хранится во 2 столбце
 
 def get_column(worksheet_name, column_number):
     worksheet = sh.worksheet(worksheet_name)
@@ -97,15 +93,8 @@ def get_player(worksheet):
         player = players_cache.get(worksheet.title)
     return player
 
-
-def get_player_stats():
-    worksheet_list = get_worksheet_list()
-    print('Выберите игрока:')
-    for i, worksheet_name in enumerate(worksheet_list[1:], 1):
-        print(f'{i}. {worksheet_name.title}')
-    print(f'0. Отмена')
-    savegame = int(input())
-    worksheet = sh.worksheet(worksheet_list[savegame].title)
+def get_player_stats(player_list, player_number):
+    worksheet = sh.worksheet(player_list[player_number].title)
     player = get_player(worksheet)
     return player
 
