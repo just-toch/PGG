@@ -34,7 +34,8 @@ def main_menu():
                 savegame = int(input())
                 if savegame == 0:
                     continue
-                menu(load_game_from_cloud())
+                name = worksheet_list[savegame].title
+                menu(load_game_from_cloud(name))
 
             case '4':
                 player_list = get_worksheet_list()
