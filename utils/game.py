@@ -1,8 +1,9 @@
-from board import GameSquare
-from board import Player
-from random import randrange
-from .gsheets import get_column, save_to_cloud
 import json
+
+from board import GameSquare, Player
+from random import randrange
+
+from .gsheets import get_column, save_to_cloud
 
 
 names = get_column('games', 1)
@@ -33,7 +34,7 @@ def save_game(player):
         json.dump(data, f, ensure_ascii=False, indent=1)
     save_to_cloud(player.name.lower(), data)
 
-def load_game(savegame, files, player=None):
+def load_game(savegame, files):
     with open(files[savegame], 'r', encoding='utf-8') as f:
         data = json.load(f)
     load_player = Player(data['name'], [], data['tokens'])

@@ -71,7 +71,7 @@ def new_game_ui():
         print('Такой игрок уже существует')
         try:
             player = load_game_from_cloud(player_name)
-        except (decoder.JSONDecodeError, TypeError) as e:
+        except (decoder.JSONDecodeError, TypeError):
             print('Однако данных по нему нет или они повреждены, создаю нового пользователя')
             player = new_game(player_name)
     return player
@@ -84,7 +84,7 @@ def main_game(player):
     menu(player)
     return None
 
-def load_game_ui(player=None):
+def load_game_ui():
     path = Path()
     files = list(path.glob(f"{'savegame'}*{'.json'}"))
     print('Выберите сохранение:')
@@ -136,7 +136,7 @@ def show_menu():
     print('3. Зачистить клетку')
     print('4. Показать карту')
     # print('5. Сохранить')
-    print('5. Загрузка')
+    # print('5. Загрузка')
     print('6. Написать отзыв')
     print('0. Сохранить и выйти')
 
@@ -198,10 +198,10 @@ def menu(player):
             # case '5':
             #     save_game(player)
 
-            case '5':
-                new_player = load_game(player)
-                if new_player is not None:
-                    player = new_player
+            # case '5':
+            #     new_player = load_game(player)
+            #     if new_player is not None:
+            #         player = new_player
 
             case '6':
                 print('Напишите название игры')

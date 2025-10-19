@@ -1,8 +1,8 @@
 import gspread
 import json
+
 from board import GameSquare
 from board import Player
-import time
 
 
 players_cache = {}

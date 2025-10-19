@@ -28,8 +28,8 @@ _ = gettext.gettext
 
 class MainMenu ( wx.Panel ):
 
-    def __init__( self, parent, id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size( 854,480 ), style = wx.TAB_TRAVERSAL, name = wx.EmptyString ):
-        wx.Panel.__init__ ( self, parent, id = id, pos = pos, size = size, style = style, name = name )
+    def __init__(self, parent, frame_id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size(854, 480), style = wx.TAB_TRAVERSAL, name = wx.EmptyString):
+        wx.Panel.__init__ (self, parent, id = frame_id, pos = pos, size = size, style = style, name = name)
 
         self.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOWTEXT ) )
 
@@ -51,10 +51,10 @@ class MainMenu ( wx.Panel ):
         gSizer2.Add( self.StatsButton, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
-        gSizer2.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+        gSizer2.Add( wx.Size(0, 0), 1, wx.EXPAND, 5 )
 
 
-        gSizer2.Add( ( 0, 0), 1, wx.EXPAND, 5 )
+        gSizer2.Add( wx.Size(0, 0), 1, wx.EXPAND, 5 )
 
         self.ExitButton = wx.Button( self, wx.ID_ANY, _(u"Выход"), wx.DefaultPosition, wx.Size( 200,50 ), 0 )
         gSizer2.Add( self.ExitButton, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL, 5 )
@@ -87,10 +87,10 @@ class MainMenu ( wx.Panel ):
                     print('Такой игрок уже существует')
                     try:
                         player = load_game_from_cloud(player_name)
-                    except (decoder.JSONDecodeError, TypeError) as e:
+                    except (decoder.JSONDecodeError, TypeError):
                         print('Однако данных по нему нет или они повреждены, создаю нового пользователя')
                         player = new_game(player_name)
-                game_frame = wx.Frame(None, title=f"Игра - {player_name}", size=(854, 480))
+                game_frame = wx.Frame(None, title=f"Игра - {player_name}", size=wx.Size(854, 480))
                 game_panel = Game(game_frame, player=player, game_field=player.field)
                 game_frame.player = player
                 game_frame.game_panel = game_panel
@@ -174,10 +174,10 @@ class NameInput ( wx.Dialog ):
 
 
 class Game(wx.Panel):
-    def __init__(self, parent, player=None, game_field=None, id=wx.ID_ANY, pos=wx.DefaultPosition,
+    def __init__(self, parent, player=None, game_field=None, frame_id=wx.ID_ANY, pos=wx.DefaultPosition,
                  size=wx.Size(854, 480),
                  style=wx.TAB_TRAVERSAL, name=wx.EmptyString):
-        wx.Panel.__init__(self, parent, id=id, pos=pos, size=size, style=style, name=name)
+        wx.Panel.__init__(self, parent, id=frame_id, pos=pos, size=size, style=style, name=name)
         self.player = player
         self.game_field = game_field or (player.field if player else [])
         self.selected_square = None
@@ -309,7 +309,7 @@ class Game(wx.Panel):
 
         return cell
 
-    def create_empty_cell(self, row, col):
+    def create_empty_cell(self, _row, _col):
         cell = wx.StaticText(self, wx.ID_ANY, "ERROR", wx.DefaultPosition, wx.Size(75, 75),
                              wx.ALIGN_CENTER | wx.ST_NO_AUTORESIZE | wx.BORDER_SIMPLE)
         cell.SetBackgroundColour(wx.Colour(255, 200, 200))
@@ -434,7 +434,7 @@ class Game(wx.Panel):
             self.clear_button.SetLabel("Зачистить клетку")
             self.clear_button.Enable()
 
-    def on_open_square(self, event):
+    def on_open_square(self, _event):
         if self.selected_square and self.selected_square.status == SquareStatus.AVAILABLE:
             print(f"Открываем клетку: row={self.selected_square.row}, col={self.selected_square.column}")
             self.selected_square.status = SquareStatus.OPENED
@@ -448,7 +448,7 @@ class Game(wx.Panel):
             self.player.tokens -= 1
             self.update_player_info()
 
-    def on_clear_square(self, event):
+    def on_clear_square(self, _event):
         if self.selected_square and self.selected_square.status == SquareStatus.OPENED:
             self.selected_square.status = SquareStatus.CLEARED
             self.player.tokens += 3
@@ -492,12 +492,12 @@ class Game(wx.Panel):
         if self.player and check_victory(self.player):
             wx.MessageBox("Поздравляем! Вы победили!", "Победа!", wx.OK | wx.ICON_INFORMATION)
 
-    def on_save(self, event):
+    def on_save(self, _event):
         if self.player:
             save_game(self.player)
             wx.MessageBox("Игра сохранена!", "Сохранение", wx.OK | wx.ICON_INFORMATION)
 
-    def on_exit(self, event):
+    def on_exit(self, _event):
         self.GetParent().Close()
 
     def __del__(self):
@@ -506,7 +506,7 @@ class Game(wx.Panel):
 
 class MainFrame(wx.Frame):
     def __init__(self):
-        super().__init__(None, title="POVSTANCI GOVNA GAUNTLET", size=(854, 480))
+        super().__init__(None, title="POVSTANCI GOVNA GAUNTLET", size=wx.Size(854, 480))
         self.current_panel = None
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.main_sizer)
