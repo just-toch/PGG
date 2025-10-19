@@ -97,17 +97,6 @@ def load_game_ui(player=None):
     player = load_game(savegame, files)
     return player
 
-def show_menu():
-    print('Введите номер команды:')
-    print('1. Имя и описание клетки')
-    print('2. Открыть клетку')
-    print('3. Зачистить клетку')
-    print('4. Показать карту')
-    # print('5. Сохранить')
-    print('5. Загрузка')
-    print('6. Написать отзыв')
-    print('0. Сохранить и выйти')
-
 def show_map(status, player):
     for row in player.field:
         for square in row:
@@ -139,6 +128,17 @@ def show_tokens(player):
     else:
         print(f'Вы можете открыть {player.tokens} клеток')
     return True
+
+def show_menu():
+    print('Введите номер команды:')
+    print('1. Имя и описание клетки')
+    print('2. Открыть клетку')
+    print('3. Зачистить клетку')
+    print('4. Показать карту')
+    # print('5. Сохранить')
+    print('5. Загрузка')
+    print('6. Написать отзыв')
+    print('0. Сохранить и выйти')
 
 def menu(player):
     show_tokens(player)

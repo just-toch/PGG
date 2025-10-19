@@ -9,13 +9,13 @@ names = get_column('games', 1)
 descriptions = get_column('games', 2)
 
 def generate_game_field(game_field):
-    names_temp, descriptions_temp = names.copy(), descriptions.copy()
+    indexes = [i for i in range(len(names))]
     for row in range(5):
         rows = []
         for column in range(5):
-            index = randrange(1, len(names_temp)-1)
-            names_temp.pop(index), descriptions_temp.pop(index)
-            name, description = index, index
+            index = randrange(1, len(indexes)-1)
+            name, description = indexes[index], indexes[index]
+            indexes.pop(index)
             rows.append(GameSquare(column, row, name, description))
         game_field.append(rows)
     return game_field
