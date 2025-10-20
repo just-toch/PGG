@@ -1,6 +1,3 @@
-from utils.gsheets import (create_review, load_game_from_cloud, get_player_stats, create_player_worksheet,
-                           get_worksheet_list)
-from utils.game import names, descriptions
 from utils.game import new_game, open_squares, load_game, save_game, check_victory
 from pathlib import Path
 from board import GameSquare

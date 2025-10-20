@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import traceback
 
 ###########################################################################
 ## Python code generated with wxFormBuilder (version 4.2.1-0-g80c4cb6)
@@ -13,7 +14,6 @@ import wx.xrc
 import gettext
 
 from board.square_status import SquareStatus
-from utils.gsheets import (load_game_from_cloud, create_player_worksheet, get_column)
 from utils.game import new_game, open_squares, save_game, check_victory
 from json import decoder
 
@@ -31,6 +31,7 @@ class MainMenu ( wx.Panel ):
     def __init__(self, parent, frame_id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size(854, 480), style = wx.TAB_TRAVERSAL, name = wx.EmptyString):
         wx.Panel.__init__ (self, parent, id = frame_id, pos = pos, size = size, style = style, name = name)
 
+        self.google_sheets = parent.google_sheets
         self.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOWTEXT ) )
 
         gSizer2 = wx.GridSizer( 6, 1, 5, 5 )
@@ -74,6 +75,10 @@ class MainMenu ( wx.Panel ):
 
     # Virtual event handlers, override them in your derived class
     def Start(self, event):
+        # from utils.gsheets import sh
+        # if sh is None:
+        #     self.StartButton.Disable()
+        #     return
         dialog = NameInput(self)
         result = dialog.ShowModal()
         if result == wx.ID_OK:
@@ -81,17 +86,17 @@ class MainMenu ( wx.Panel ):
             print(f"Игрок: {player_name}")
 
             try:
-                if create_player_worksheet(player_name):
-                    player = new_game(player_name)
+                if self.google_sheets.create_player_worksheet(player_name):
+                    player = new_game(player_name, self.google_sheets)
                 else:
                     print('Такой игрок уже существует')
                     try:
-                        player = load_game_from_cloud(player_name)
+                        player = self.google_sheets.load_game_from_cloud(player_name)
                     except (decoder.JSONDecodeError, TypeError):
                         print('Однако данных по нему нет или они повреждены, создаю нового пользователя')
-                        player = new_game(player_name)
+                        player = new_game(player_name, self.google_sheets)
                 game_frame = wx.Frame(None, title=f"Игра - {player_name}", size=wx.Size(854, 480))
-                game_panel = Game(game_frame, player=player, game_field=player.field)
+                game_panel = Game(game_frame, player=player, game_field=player.field, google_sheets = self.google_sheets)
                 game_frame.player = player
                 game_frame.game_panel = game_panel
                 game_frame.Centre()
@@ -176,12 +181,13 @@ class NameInput ( wx.Dialog ):
 class Game(wx.Panel):
     def __init__(self, parent, player=None, game_field=None, frame_id=wx.ID_ANY, pos=wx.DefaultPosition,
                  size=wx.Size(854, 480),
-                 style=wx.TAB_TRAVERSAL, name=wx.EmptyString):
+                 style=wx.TAB_TRAVERSAL, name=wx.EmptyString, google_sheets=None):
         wx.Panel.__init__(self, parent, id=frame_id, pos=pos, size=size, style=style, name=name)
         self.player = player
         self.game_field = game_field or (player.field if player else [])
         self.selected_square = None
         self.selected_cell = None
+        self.google_sheets = google_sheets
         print("Создание игрового поля:")
         print(f"Размер поля: {len(self.game_field)}x{len(self.game_field[0]) if self.game_field else 0}")
         for row in range(5):
@@ -192,10 +198,11 @@ class Game(wx.Panel):
                 else:
                     print(f"Клетка ({row},{col}): ОШИБКА - не существует")
         try:
-            self.names = get_column('games', 1)
-            self.descriptions = get_column('games', 2)
+            self.names = google_sheets.get_column('games', 1)
+            self.descriptions = google_sheets.get_column('games', 2)
         except Exception as e:
             print(f"Ошибка загрузки данных: {e}")
+            traceback.print_exc()
             self.names = [f"Клетка {i + 1}" for i in range(25)]
             self.descriptions = [f"Описание {i + 1}" for i in range(25)]
 
@@ -457,7 +464,7 @@ class Game(wx.Panel):
             self.refresh_cells()
 
     def refresh_cells(self):
-        save_game(self.player)
+        save_game(self.player, self.google_sheets)
         self.selected_square = None
         self.selected_cell = None
 
@@ -494,7 +501,7 @@ class Game(wx.Panel):
 
     def on_save(self, _event):
         if self.player:
-            save_game(self.player)
+            save_game(self.player, self.google_sheets)
             wx.MessageBox("Игра сохранена!", "Сохранение", wx.OK | wx.ICON_INFORMATION)
 
     def on_exit(self, _event):
@@ -505,8 +512,9 @@ class Game(wx.Panel):
 
 
 class MainFrame(wx.Frame):
-    def __init__(self):
+    def __init__(self, google_sheets):
         super().__init__(None, title="POVSTANCI GOVNA GAUNTLET", size=wx.Size(854, 480))
+        self.google_sheets = google_sheets
         self.current_panel = None
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.main_sizer)
@@ -529,8 +537,3 @@ class MainFrame(wx.Frame):
         self.main_sizer.Clear()
         self.main_sizer.Add(self.current_panel, 1, wx.EXPAND)
         self.Layout()
-
-if __name__ == "__main__":
-    app = wx.App()
-    frame = MainFrame()
-    app.MainLoop()

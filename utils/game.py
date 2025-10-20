@@ -3,13 +3,12 @@ import json
 from board import GameSquare, Player
 from random import randrange
 
-from .gsheets import get_column, save_to_cloud
 
+# names = get_column('games', 1)
+# descriptions = get_column('games', 2)
 
-names = get_column('games', 1)
-descriptions = get_column('games', 2)
-
-def generate_game_field(game_field):
+def generate_game_field(game_field, google_sheets):
+    names = google_sheets.get_column('games', 1)
     indexes = [i for i in range(len(names))]
     for row in range(5):
         rows = []
@@ -27,12 +26,12 @@ def open_squares(square, player):
         for j in range(max(0, int(coordinates[1])-1), min(5, int(coordinates[1])+2)):
             player.field[i][j].change_to_available()
 
-def save_game(player):
+def save_game(player, google_sheets):
     filename = f'savegame_{player.name.lower()}.json'
     data = player.save()
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
-    save_to_cloud(player.name.lower(), data)
+    google_sheets.save_to_cloud(player.name.lower(), data)
 
 def load_game(savegame, files):
     with open(files[savegame], 'r', encoding='utf-8') as f:
@@ -68,10 +67,10 @@ def check_victory(player):
         return True
     return False
 
-def new_game(player_name):
+def new_game(player_name, google_sheets):
     player = Player(player_name, [], 3)
-    generate_game_field(player.field)
+    generate_game_field(player.field, google_sheets)
     player.field[2][2].start_position()
     open_squares(player.field[2][2], player)
-    save_game(player)
+    save_game(player, google_sheets)
     return player
