@@ -7,7 +7,7 @@ from utils import GoogleSheets
 if __name__ == "__main__":
     google_sheets = GoogleSheets()
     if '--console' in sys.argv:
-        main_menu()
+        main_menu(google_sheets)
     else:
         app = wx.App()
         frame = MainFrame(google_sheets)

@@ -96,20 +96,18 @@ class GoogleSheets:
         worksheet.update_cell(1000, 26, json_data) # сохранение всегда хранится в ячейке 1000, 26 (она же Z1000)
 
     def get_worksheet_list(self):
-        global worksheet_list_cache
-        if worksheet_list_cache is None:
-            worksheet_list_cache = self.sh.worksheets()
-        return worksheet_list_cache
+        if self.worksheet_list_cache is None:
+            self.worksheet_list_cache = self.sh.worksheets()
+        return self.worksheet_list_cache
 
     def get_player(self, worksheet):
-        global players_cache
-        if worksheet.title not in players_cache:
+        if worksheet.title not in self.players_cache:
             player = self.load_game_from_cloud(worksheet.title)
             player.games_list = worksheet.col_values(1)
             player.review_list = worksheet.col_values(2)
-            players_cache[worksheet.title] = player
+            self.players_cache[worksheet.title] = player
         else:
-            player = players_cache.get(worksheet.title)
+            player = self.players_cache.get(worksheet.title)
         return player
 
     def get_player_stats(self, player_list, player_number):

@@ -4,9 +4,9 @@ from board import GameSquare
 from json import decoder
 
 
-def main_menu():
+def main_menu(google_sheets=None):
     while True:
-        print('1. Новая игра')
+        print('1. Начать игру')
         print('2. Загрузка')
         print('3. Загрузка из облака')
         print('4. Посмотреть статистику других игроков')
@@ -15,15 +15,15 @@ def main_menu():
         command = input()
         match command:
             case '1':
-                player = new_game_ui()
-                menu(player)
+                player = new_game_ui(google_sheets)
+                menu(player, google_sheets)
 
             case '2':
                 player = load_game_ui()
-                menu(player)
+                menu(player, google_sheets)
 
             case '3':
-                worksheet_list = get_worksheet_list()
+                worksheet_list = google_sheets.get_worksheet_list()
                 print('Выберите сохранение:')
                 for i, worksheet_name in enumerate(worksheet_list[1:], 1):
                     print(f'{i}. {worksheet_name.title}')
@@ -32,16 +32,16 @@ def main_menu():
                 if savegame == 0:
                     continue
                 name = worksheet_list[savegame].title
-                menu(load_game_from_cloud(name))
+                menu(google_sheets.load_game_from_cloud(name), google_sheets)
 
             case '4':
-                player_list = get_worksheet_list()
+                player_list = google_sheets.get_worksheet_list()
                 print('Выберите игрока:')
                 for i, worksheet_name in enumerate(player_list[1:], 1):
                     print(f'{i}. {worksheet_name.title}')
                 print(f'0. Отмена')
                 player_number = int(input())
-                player = get_player_stats(player_list, player_number)
+                player = google_sheets.get_player_stats(player_list, player_number)
                 print('1. Посмотреть карту')
                 print('2. Посмотреть обзоры')
                 print('0. Выход')
@@ -60,17 +60,17 @@ def main_menu():
                 break
 
 
-def new_game_ui():
+def new_game_ui(google_sheets=None):
     player_name = input('Введите свое имя:\n')
-    if create_player_worksheet(player_name):
-        player = new_game(player_name)
+    if google_sheets.create_player_worksheet(player_name):
+        player = new_game(player_name, google_sheets)
     else:
         print('Такой игрок уже существует')
         try:
-            player = load_game_from_cloud(player_name)
+            player = google_sheets.load_game_from_cloud(player_name)
         except (decoder.JSONDecodeError, TypeError):
             print('Однако данных по нему нет или они повреждены, создаю нового пользователя')
-            player = new_game(player_name)
+            player = new_game(player_name, google_sheets)
     return player
 
 def main_game(player):
@@ -137,13 +137,15 @@ def show_menu():
     print('6. Написать отзыв')
     print('0. Сохранить и выйти')
 
-def menu(player):
+def menu(player, google_sheets=None):
     show_tokens(player)
     show_menu()
     while True:
         command = input()
         match command:
             case '1':
+                names = google_sheets.get_column('games', 1)
+                descriptions = google_sheets.get_column('games', 2)
                 coords = input('Введите координаты клетки:\n')
                 x, y = int(coords[0]), int(coords[1])
                 if (isinstance(player.field[x][y], GameSquare) and player.field[x][y].status != 'closed' or
@@ -205,10 +207,10 @@ def menu(player):
                 gamename = input()
                 print('Напишите отзыв')
                 review = input()
-                create_review(player.name.lower(), gamename, review)
+                google_sheets.create_review(player.name.lower(), gamename, review)
 
             case '0':
-                save_game(player)
+                save_game(player, google_sheets)
                 break
 
         if check_victory(player):
